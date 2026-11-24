@@ -1,0 +1,26 @@
+name: ci-2649-validate
+on:
+  push:
+    branches:
+      - ci/2649-validate-revoke
+permissions:
+  contents: read
+jobs:
+  thingsearch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'temurin'
+          java-version: 25
+          cache: 'maven'
+      - name: Install thingsearch/service dependencies
+        run: mvn -B -T4 -q install -pl thingsearch/service -am -DskipTests -Djapicmp.skip=true -Dlicense.skip=true -Dmaven.javadoc.skip=true
+      - name: Unit tests
+        run: mvn -B verify -pl thingsearch/service -Dtest='EvaluatedPolicyTest,EnforcedThingMapperTest' -Dit.test=EmptyWithPartialReadGrantsIT,ExistsIT -Dsurefire.failIfNoSpecifiedTests=false -Dfailsafe.failIfNoSpecifiedTests=false -Djapicmp.skip=true
+      - name: All thingsearch/service unit tests
+        if: always()
+        run: mvn -B test -pl thingsearch/service -Djapicmp.skip=true
